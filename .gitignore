@@ -4,3 +4,4 @@ venv
 *.pptx
 *.zip
 *.csv
+*.gpkg
