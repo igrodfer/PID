@@ -1,0 +1,7 @@
+ 0   Provincias con mayor número de pernoctaciones  21900 non-null  object
+ 1   Viajeros y pernoctaciones                      21900 non-null  object
+ 2   Residencia                                     21900 non-null  object
+ 3   Periodo                                        21900 non-null  object
+ 4   total_extranjeros                              21900 non-null  int64 
+ 5   year                                           21900 non-null  object
+ 6   NAMEUNIT 
