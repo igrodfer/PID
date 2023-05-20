@@ -15,7 +15,7 @@ from shapely.geometry import Point
 pd.options.display.max_columns = 25
 
 
-# In[2]:
+# In[5]:
 
 
 provincias = gpd.read_file('lineas_limite.zip!SHP_ETRS89/recintos_provinciales_inspire_peninbal_etrs89')
@@ -24,7 +24,7 @@ provincias = provincias.to_crs(crs=3395)
 provincias['latitud'] = provincias.centroid.map(lambda p: p.y)
 
 
-# In[3]:
+# In[6]:
 
 
 estaciones = gpd.read_file('RT_Espana_PorModos.zip!RT_FFCC/rt_estacionffcc_p.shp')
@@ -32,13 +32,13 @@ estaciones = estaciones.to_crs("+proj=cea EPSG:4326")
 estaciones = estaciones.to_crs(crs=3395)
 
 
-# In[4]:
+# In[7]:
 
 
 estaciones.info()
 
 
-# In[6]:
+# In[8]:
 
 
 def contains_any(nombre:str,lista):
@@ -48,7 +48,7 @@ def contains_any(nombre:str,lista):
     return False
 
 
-# In[7]:
+# In[9]:
 
 
 tramos = gpd.read_file('RT_Espana_PorModos.zip!RT_FFCC/rt_tramofc_linea.shp')
@@ -64,13 +64,13 @@ tramos.loc[(tramos.codigo.str.contains("12C220010")),"uso_ppalD"] = "Otros usos"
 lineas_ave = tramos[tramos["uso_ppalD"] == "Uso predominante Alta Velocidad"].dissolve(by="nombre").reset_index()
 
 
-# In[8]:
+# In[10]:
 
 
 tramos.info()
 
 
-# In[9]:
+# In[16]:
 
 
 estaciones_excluir="""Estación de Vigo-
@@ -87,11 +87,12 @@ Cargadero de Mérida-Contenedores
 Apartadero de Casar de Cáceres
 Estación de Girona-Mercaderies
 Estación de Zaragoza-Delicias
-Estación de La Sagrera""".split("\n")
+Estación de La Sagrera
+Apeadero de la Universidad de Cádiz""".split("\n")
 id_redondela_redundante = 360450000149
 
 
-# In[10]:
+# In[12]:
 
 
 estaciones_ave_nombres = """Estación de Albacete
@@ -143,7 +144,8 @@ Badajoz
 Mérida
 Cáceres
 Estación de Plasencia
-Estación de Burgos Rosa Manzano""".split("\n")
+Estación de Burgos Rosa Manzano
+Cádiz""".split("\n")
 print(len(estaciones_ave_nombres))
 
 anotaciones_derecha = """Antequera
@@ -158,7 +160,19 @@ Pontevedra
 Córdoba
 Apartadero""".split("\n")
 
-palabras_redundantes = """Estación de 
+
+# In[17]:
+
+
+for nombre in estaciones_ave_nombres:
+    print(f"{nombre:>50}: {len(estaciones[(estaciones.nombre.str.contains(nombre))&(~estaciones.nombre.apply(lambda x:contains_any(x,estaciones_excluir)))])}")
+
+
+# In[18]:
+
+
+def sanear_nombre_estacion(nombre:str):
+    palabras_redundantes = """Estación de 
 Estacion de 
 Alta Velocidad de
 Alta Velocidad
@@ -179,19 +193,6 @@ Fernando Zóbel
 -Campo Grande
 -Sants
  Rosa Manzano""".split("\n")
-
-# In[11]:
-
-
-for nombre in estaciones_ave_nombres:
-    print(f"{nombre:>50}: {len(estaciones[(estaciones.nombre.str.contains(nombre))&(~estaciones.nombre.apply(lambda x:contains_any(x,estaciones_excluir)))])}")
-
-
-# In[12]:
-
-
-def sanear_nombre_estacion(nombre:str):
-    
     for word in palabras_redundantes:
         nombre = nombre.replace(word,"")
     
@@ -201,7 +202,7 @@ def sanear_nombre_estacion(nombre:str):
     return nombre
 
 
-# In[13]:
+# In[22]:
 
 
 gfd_estaciones_ave = estaciones[(estaciones.id_estfc != id_redondela_redundante)&(estaciones.nombre.apply(lambda x:contains_any(x,estaciones_ave_nombres))& (estaciones.nombre.apply(lambda x:not contains_any(x,estaciones_excluir))))]
@@ -212,13 +213,11 @@ lineas_ave.plot(ax = ax,linewidth=2,column="estadofisD",cmap="copper_r",legend=T
 gfd_estaciones_ave.plot(ax = ax)
 gfd_estaciones_ave[gfd_estaciones_ave["nombre"].apply(lambda x: contains_any(x,anotaciones_derecha))].apply(lambda x: ax.annotate(text=sanear_nombre_estacion(x.nombre),
     xy=x.geometry.centroid.coords[0], ha='right',
-    fontsize=12),axis=1)
+    fontsize=14),axis=1)
 gfd_estaciones_ave[gfd_estaciones_ave["nombre"].apply(lambda x: not contains_any(x,anotaciones_derecha))].apply(lambda x: ax.annotate(text=sanear_nombre_estacion(x.nombre),
     xy=x.geometry.centroid.coords[0], ha='left',
-    fontsize=12),axis=1)
+    fontsize=14),axis=1)
 fig.tight_layout()
 plt.axis("off")
 fig.suptitle("Líneas y estaciones de Alta Velocidad Española",fontsize=24)
-plt.savefig("results/ave.png")
-plt.savefig("results/ave.svg")
-plt.show()
+
