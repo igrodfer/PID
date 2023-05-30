@@ -36,7 +36,8 @@ def load_fuentes_turismo()-> pd.DataFrame:
     name_mappings_dict["Palestina. Estado Observador, no miembro de Naciones Unidas"] = "PS"
 
     turismo_por_pais["country_code_2"] = turismo_por_pais["Países"].map(name_mappings_dict)
-    turismo_por_pais = turismo_por_pais.dropna()
+    turismo_por_pais = turismo_por_pais.dropna(subset=["country_code_2"])
+
     return turismo_por_pais
 
 
@@ -49,7 +50,7 @@ def filter_turismo_df(df:pd.DataFrame,provincia,con_turistico,periodo)-> pd.Data
     if provincia:
         match_provincia = df["provincia"] == provincia
     else:
-        match_provincia = df["provincia"].all()
+        match_provincia = df["Provincia de destino"]== "Total Nacional"
 
     match_concepto = df["Concepto turístico"] == con_turistico
     if periodo:
@@ -57,14 +58,13 @@ def filter_turismo_df(df:pd.DataFrame,provincia,con_turistico,periodo)-> pd.Data
     else:
         match_periodo = df["Periodo"].all()
 
-    df = df[match_concepto & match_periodo & match_provincia]    
+    df = df[match_concepto & match_periodo & match_provincia]
 
     return df
 
 def display_turismo_map(df:pd.DataFrame):
-    df = df[df["Provincia de destino"] != "Total Nacional"]
     colors = ["YlGn","BuGn", "BuPu","GnBu", 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'RdPu', 'YlGnBu', 'YlOrBr']
-
+    
     m = folium.Map(location=[40.42,  -3.7], zoom_start=2,max_zoom=5,min_zoom=1,max_bounds=True)
     coropletas = folium.Choropleth(
         nan_fill_color="red",
@@ -80,19 +80,26 @@ def display_turismo_map(df:pd.DataFrame):
     )
     coropletas.add_to(m)
 
-    # for feature in coropletas.geojson.data['features']:
-    #    code = feature['properties']['FID']
-    #    feature['properties']['country_code_2'] = prov_dict[code]
-    # coropletas.geojson.add_child(folium.features.GeoJsonTooltip(['country_code_2'], labels=False))
+    for feature in coropletas.geojson.data['features']:
+        code = feature['properties']['FID']
+
+        slice = df[df["country_code_2"]==code]
+        if len(slice) > 0:
+            feature['properties']['CNTR_NAME'] = slice["Países"].tolist()[0]
+            feature['properties']['CAPT'] = slice["Total"].tolist()[0]
+        else:
+            feature['properties']['CAPT'] = 0
+    coropletas.geojson.add_child(folium.features.GeoJsonTooltip(['CNTR_NAME',"CAPT"], labels=False))
 
     folium.LayerControl().add_to(m)
     st_map = st_folium(m, width=700, height=450)
-    codigo = '00'
-    provincia = "Todas"
-    if st_map['last_active_drawing']:
-        codigo = st_map['last_active_drawing']['properties']['FID']
-        provincia = st_map['last_active_drawing']['properties']['CNTR_NAME']
-    return codigo, provincia
+    # codigo = '00'
+    # provincia = "Todas"
+    # if st_map['last_active_drawing']:
+    #     codigo = st_map['last_active_drawing']['properties']['FID']
+    #     provincia = st_map['last_active_drawing']['properties']['CNTR_NAME']
+    # return codigo, provincia
+    return None, None
 
 
 def show_table(df,continente,pais,con_turistico,periodo):
@@ -104,7 +111,6 @@ def show_table(df,continente,pais,con_turistico,periodo):
     st.table(df[match_concepto & match_continente & match_periodo & match_pais])
 
 # def display_metrica_nacional(df_turismo,)
-
 
 
 st.title(APP_TITLE)

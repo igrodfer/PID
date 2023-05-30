@@ -70,17 +70,28 @@ def filter_turismo_df(df:pd.DataFrame,continente,pais,con_turistico,periodo)-> p
 
     return df
 
-def display_turismo_map(df):
+def display_turismo_map(df,tipo="Turistas",color="YlGn"):
     df = df[df["Provincia de destino"] != "Total Nacional"]
 
     m = folium.Map(location=[40.42,  -3.7], zoom_start=5,max_zoom=7,min_zoom=5,max_bounds=True,max_lat=50,min_lat=20,max_lon=10,min_lon=-20)
-    coropletas = folium.Choropleth(geo_data=prov_geo,name="choropleth",data=df,columns=["codigo", "Total"],key_on="properties.codigo", fill_color="YlGn",fill_opacity=0.7,line_opacity=1.0,legend_name="Turistas")
+    coropletas = folium.Choropleth(
+        geo_data=prov_geo,
+        name="choropleth",
+        data=df,
+        columns=["codigo", "Total"],
+        key_on="properties.codigo", 
+        fill_color=color,
+        fill_opacity=0.7,
+        line_opacity=1.0,
+        legend_name=tipo
+    )
     coropletas.add_to(m)
 
     for feature in coropletas.geojson.data['features']:
        code = feature['properties']['codigo']
        feature['properties']['Provincia'] = prov_dict[code]
-    coropletas.geojson.add_child(folium.features.GeoJsonTooltip(['Provincia'], labels=False))
+       feature["properties"]["texto"] = df[df["codigo"]==code]["Total"].tolist()[0]
+    coropletas.geojson.add_child(folium.features.GeoJsonTooltip(['Provincia',"texto"], labels=False))
 
     folium.LayerControl().add_to(m)
     st_map = st_folium(m, width=700, height=450)
@@ -120,7 +131,6 @@ prov_data['codigo'] = prov_data['codigo'].astype(str).str.zfill(2)
 
 prov_list = list(prov_data['Provincia'].unique())
 prov_dict = pd.Series(prov_data.Provincia.values,index=prov_data.codigo).to_dict()
-
 #Display Metrics
 
 pais = None
@@ -137,14 +147,22 @@ else:
 if pais == "Todos":
     pais = None
 
-concepto = st.selectbox('Concepto turístico', df_turistmo["Concepto turístico"].dropna().unique())
+conceptos_list = df_turistmo["Concepto turístico"].dropna().unique().tolist()
+concepto = st.selectbox('Concepto turístico', conceptos_list)
+
+color_list = ["YlGn","BuGn", "BuPu","GnBu", 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'RdPu', 'YlGnBu', 'YlOrBr']
+color_i = conceptos_list.index(concepto)
+if color_i < len(color_list):
+    color = color_list[color_i]
+else:
+    color = color_list[0]
 periodo = st.selectbox('Periodo', df_turistmo["Periodo"].dropna().unique())
 
 
 df_filtered = filter_turismo_df(df_turistmo,continente,pais,concepto,periodo)
 
 st.metric("Total Nacional (" + concepto+")",int(df_filtered[df_filtered["Provincia de destino"] == "Total Nacional"]["Total"].values[0]))
-code, provincia_seleccionada = display_turismo_map(df_filtered)
+code, provincia_seleccionada = display_turismo_map(df_filtered,tipo=concepto,color=color)
 
 if code != "00":
     st.subheader(provincia_seleccionada)
