@@ -11,7 +11,7 @@ def load_turism_data()-> pd.DataFrame:
     # Preproceso de datos turísticos
 
 
-    turistas = pd.read_csv("trabajoFinal/data/52047.csv",sep=";")
+    turistas = pd.read_csv("https://www.ine.es/jaxiT3/files/t/es/csv_bdsc/52047.csv",sep=";")
     turistas["year"] = turistas["Periodo"].apply(lambda x: x[:4])
     turistas["Total"] = turistas["Total"].str.replace(".","")
     turistas["Total"] = turistas["Total"].str.replace(",",".")
@@ -33,7 +33,6 @@ def load_turism_data()-> pd.DataFrame:
     turistas["Provincia de destino"] = turistas["Provincia de destino"].apply(lambda x: name_fix[x] if x in name_fix else x)
     turistas.drop(columns="RESIDENCIA/ORIGEN",inplace=True)
 
-    prov_geo = 'trabajoFinal/data/provincias.geojson'
     provs = gpd.read_file(prov_geo)
     turistas = turistas.merge(right=provs[["codigo","provincia"]],right_on="provincia",left_on="Provincia de destino",how="left")
     turistas.codigo.fillna("00",inplace=True)
@@ -89,7 +88,7 @@ def display_turismo_map(df,tipo="Turistas",color="YlGn"):
 
     for feature in coropletas.geojson.data['features']:
        code = feature['properties']['codigo']
-       feature['properties']['Provincia'] = prov_dict[code]
+       feature['properties']['Provincia'] = df[df["codigo"]==code]["provincia"].tolist()[0] #prov_dict[code]
        feature["properties"]["texto"] = df[df["codigo"]==code]["Total"].tolist()[0]
     coropletas.geojson.add_child(folium.features.GeoJsonTooltip(['Provincia',"texto"], labels=False))
 
@@ -123,14 +122,8 @@ st.set_page_config(APP_TITLE,menu_items={
 st.title(APP_TITLE)
 st.caption(APP_SUB_TITLE)
 
-prov_geo = 'trabajoFinal/data/provincias.geojson'
-prov_paro = 'trabajoFinal/data/TasaParoProvSeTr.csv'
-prov_data = pd.read_csv(prov_paro, encoding='utf-8')
-
-prov_data['codigo'] = prov_data['codigo'].astype(str).str.zfill(2)
-
-prov_list = list(prov_data['Provincia'].unique())
-prov_dict = pd.Series(prov_data.Provincia.values,index=prov_data.codigo).to_dict()
+prov_geo = '/app/pid/trabajoFinal/data/provincias.geojson'
+# prov_geo = 'https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_60M_2020_4326.geojson'
 #Display Metrics
 
 pais = None
