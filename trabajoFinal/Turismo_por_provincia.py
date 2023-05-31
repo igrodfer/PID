@@ -11,7 +11,7 @@ def load_turism_data()-> pd.DataFrame:
     # Preproceso de datos turísticos
 
 
-    turistas = pd.read_csv("data/52047.csv",sep=";")
+    turistas = pd.read_csv("trabajoFinal/data/52047.csv",sep=";")
     turistas["year"] = turistas["Periodo"].apply(lambda x: x[:4])
     turistas["Total"] = turistas["Total"].str.replace(".","")
     turistas["Total"] = turistas["Total"].str.replace(",",".")
@@ -33,7 +33,7 @@ def load_turism_data()-> pd.DataFrame:
     turistas["Provincia de destino"] = turistas["Provincia de destino"].apply(lambda x: name_fix[x] if x in name_fix else x)
     turistas.drop(columns="RESIDENCIA/ORIGEN",inplace=True)
 
-    prov_geo = 'data/provincias.geojson'
+    prov_geo = 'trabajoFinal/data/provincias.geojson'
     provs = gpd.read_file(prov_geo)
     turistas = turistas.merge(right=provs[["codigo","provincia"]],right_on="provincia",left_on="Provincia de destino",how="left")
     turistas.codigo.fillna("00",inplace=True)
@@ -123,8 +123,8 @@ st.set_page_config(APP_TITLE,menu_items={
 st.title(APP_TITLE)
 st.caption(APP_SUB_TITLE)
 
-prov_geo = 'data/provincias.geojson'
-prov_paro = 'data/TasaParoProvSeTr.csv'
+prov_geo = 'trabajoFinal/data/provincias.geojson'
+prov_paro = 'trabajoFinal/data/TasaParoProvSeTr.csv'
 prov_data = pd.read_csv(prov_paro, encoding='utf-8')
 
 prov_data['codigo'] = prov_data['codigo'].astype(str).str.zfill(2)

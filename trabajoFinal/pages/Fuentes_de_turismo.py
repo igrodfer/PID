@@ -117,7 +117,7 @@ st.title(APP_TITLE)
 st.caption(APP_SUB_TITLE)
 
 prov_geo = 'https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_60M_2020_4326.geojson'
-prov_paro = 'data/TasaParoProvSeTr.csv'
+prov_paro = 'trabajoFinal/data/TasaParoProvSeTr.csv'
 prov_data = pd.read_csv(prov_paro, encoding='utf-8')
 
 prov_data['codigo'] = prov_data['codigo'].astype(str).str.zfill(2)
