@@ -3,15 +3,18 @@ import pandas as pd
 import folium
 import geopandas as gpd
 from streamlit_folium import st_folium
-
+import os
 
 @st.cache_data
 def load_turism_data()-> pd.DataFrame:
     #===================================================================
     # Preproceso de datos turísticos
 
-
-    turistas = pd.read_csv("https://www.ine.es/jaxiT3/files/t/es/csv_bdsc/52047.csv",sep=";")
+    if os.path.exists("data/52047.csv"):
+        tourism_csv = "data/52047.csv"
+    else:
+        tourism_csv = "/app/pid/trabajoFinal/data/52047.csv"
+    turistas = pd.read_csv(tourism_csv,sep=";")
     turistas["year"] = turistas["Periodo"].apply(lambda x: x[:4])
     turistas["Total"] = turistas["Total"].str.replace(".","")
     turistas["Total"] = turistas["Total"].str.replace(",",".")
@@ -31,7 +34,7 @@ def load_turism_data()-> pd.DataFrame:
                 "Araba/Álava":"Araba",
                 "Palmas, Las":"Las Palmas"}
     turistas["Provincia de destino"] = turistas["Provincia de destino"].apply(lambda x: name_fix[x] if x in name_fix else x)
-    turistas.drop(columns="RESIDENCIA/ORIGEN",inplace=True)
+    # turistas.drop(columns="RESIDENCIA/ORIGEN",inplace=True)
 
     provs = gpd.read_file(prov_geo)
     turistas = turistas.merge(right=provs[["codigo","provincia"]],right_on="provincia",left_on="Provincia de destino",how="left")
@@ -122,26 +125,29 @@ st.set_page_config(APP_TITLE,menu_items={
 st.title(APP_TITLE)
 st.caption(APP_SUB_TITLE)
 
-prov_geo = '/app/pid/trabajoFinal/data/provincias.geojson'
-# prov_geo = 'https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_60M_2020_4326.geojson'
+if os.path.exists("data/provincias.geojson"):
+    prov_geo = "data/provincias.geojson"
+else:
+    prov_geo = '/app/pid/trabajoFinal/data/provincias.geojson'
+
 #Display Metrics
 
 pais = None
 df_turistmo = load_turism_data()
 
-continente = st.selectbox('Continentes',["Todos"]+df_turistmo["Continentes"].dropna().unique().tolist())
+continente = st.sidebar.selectbox('Continentes',["Todos"]+df_turistmo["Continentes"].dropna().unique().tolist())
     
 if continente == "Todos":
     continente = None
 else:
     turismo_continente = df_turistmo[df_turistmo["Continentes"] == continente]
-    pais = st.selectbox('País',["Todos"] + df_turistmo[(df_turistmo["Continentes"] == continente)]["Países"].dropna().unique().tolist())
+    pais = st.sidebar.selectbox('País',["Todos"] + df_turistmo[(df_turistmo["Continentes"] == continente)]["Países"].dropna().unique().tolist())
 
 if pais == "Todos":
     pais = None
 
 conceptos_list = df_turistmo["Concepto turístico"].dropna().unique().tolist()
-concepto = st.selectbox('Concepto turístico', conceptos_list)
+concepto = st.sidebar.selectbox('Concepto turístico', conceptos_list)
 
 color_list = ["YlGn","BuGn", "BuPu","GnBu", 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'RdPu', 'YlGnBu', 'YlOrBr']
 color_i = conceptos_list.index(concepto)
@@ -149,7 +155,7 @@ if color_i < len(color_list):
     color = color_list[color_i]
 else:
     color = color_list[0]
-periodo = st.selectbox('Periodo', df_turistmo["Periodo"].dropna().unique())
+periodo = st.sidebar.selectbox('Periodo', df_turistmo["Periodo"].dropna().unique())
 
 
 df_filtered = filter_turismo_df(df_turistmo,continente,pais,concepto,periodo)

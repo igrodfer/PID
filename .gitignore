@@ -8,4 +8,5 @@ venv
 
 data/*
 !data/.gitkeep
+!trabajoFinal/data/52047.csv
 __pycache__

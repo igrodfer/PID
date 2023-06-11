@@ -121,13 +121,13 @@ prov_geo = 'https://gisco-services.ec.europa.eu/distribution/v2/countries/geojso
 
 df_turistmo = load_fuentes_turismo()
 
-provincia = st.selectbox('Provincia',["Todos"] + df_turistmo["provincia"].dropna().unique().tolist())
+provincia = st.sidebar.selectbox('Provincia',["Todos"] + df_turistmo["provincia"].dropna().unique().tolist())
 
 if provincia == "Todos":
     provincia = None
 
-concepto = st.selectbox('Concepto turístico', df_turistmo["Concepto turístico"].dropna().unique())
-periodo = st.selectbox('Periodo', df_turistmo["Periodo"].dropna().unique())
+concepto = st.sidebar.selectbox('Concepto turístico', df_turistmo["Concepto turístico"].dropna().unique())
+periodo = st.sidebar.selectbox('Periodo', df_turistmo["Periodo"].dropna().unique())
 
 
 df_filtered = filter_turismo_df(df_turistmo,provincia,concepto,periodo)
